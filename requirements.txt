@@ -1,0 +1,10 @@
+Pillow>=10.0.0
+requests>=2.31.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+matplotlib>=3.7.0
+tkinter-tooltip>=2.3.0
+colorthief>=0.2.1
+scikit-image>=0.21.0
+fonttools>=4.42.0
+Wand>=0.6.11

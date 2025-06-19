@@ -4,8 +4,17 @@ import random
 import time
 import requests
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-from PIL import Image, ImageTk
+from tkinter import filedialog, messagebox, ttk, colorchooser, font
+from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageFilter, ImageEnhance
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import json
+from datetime import datetime
+import threading
+from colorthief import ColorThief
+import io
 
 class WallpaperChangerApp:
     def __init__(self, root):
