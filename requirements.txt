@@ -8,3 +8,6 @@ colorthief>=0.2.1
 scikit-image>=0.21.0
 fonttools>=4.42.0
 Wand>=0.6.11
+python-unsplash>=1.1.0
+python-pexels>=1.0.0
+python-dotenv>=1.0.0

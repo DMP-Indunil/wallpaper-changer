@@ -24,16 +24,45 @@ class WallpaperChangerApp:
 
         self.wallpaper_folder = ""
         self.running = False
-        self.wallpaper_source = "local"  # Default source
+        
+        # Initialize image source manager
+        from image_sources import ImageSourceManager
+        self.source_manager = ImageSourceManager()
+        self.wallpaper_source = self.source_manager.config["default_source"]
 
         # Source selection
         self.source_label = tk.Label(root, text="Select Wallpaper Source:")
         self.source_label.pack(pady=5)
 
-        self.source_var = tk.StringVar(value="local")
-        self.source_dropdown = ttk.Combobox(root, textvariable=self.source_var, values=["local", "online"])
+        self.source_var = tk.StringVar(value=self.wallpaper_source)
+        self.source_dropdown = ttk.Combobox(root, textvariable=self.source_var, 
+                                          values=["local", "online", "unsplash", "pexels"])
         self.source_dropdown.pack(pady=5)
         self.source_dropdown.bind("<<ComboboxSelected>>", self.on_source_change)
+
+        # API Key configuration
+        self.api_frame = ttk.LabelFrame(root, text="API Configuration")
+        self.api_frame.pack(pady=5, padx=5, fill="x")
+
+        # Unsplash API key
+        self.unsplash_label = tk.Label(self.api_frame, text="Unsplash API Key:")
+        self.unsplash_label.pack(pady=2)
+        self.unsplash_key = tk.Entry(self.api_frame, width=40, show="*")
+        self.unsplash_key.pack(pady=2)
+        if self.source_manager.config["unsplash_api_key"]:
+            self.unsplash_key.insert(0, self.source_manager.config["unsplash_api_key"])
+
+        # Pexels API key
+        self.pexels_label = tk.Label(self.api_frame, text="Pexels API Key:")
+        self.pexels_label.pack(pady=2)
+        self.pexels_key = tk.Entry(self.api_frame, width=40, show="*")
+        self.pexels_key.pack(pady=2)
+        if self.source_manager.config["pexels_api_key"]:
+            self.pexels_key.insert(0, self.source_manager.config["pexels_api_key"])
+
+        # Save API keys button
+        self.save_api_button = tk.Button(self.api_frame, text="Save API Keys", command=self.save_api_keys)
+        self.save_api_button.pack(pady=5)
 
         # Folder selection
         self.folder_label = tk.Label(root, text="Select Wallpaper Folder:")
@@ -74,12 +103,24 @@ class WallpaperChangerApp:
 
     def on_source_change(self, event):
         self.wallpaper_source = self.source_var.get()
+        
+        # Disable all inputs first
+        self.folder_button.config(state=tk.DISABLED)
+        self.url_entry.config(state=tk.DISABLED)
+        self.unsplash_key.config(state=tk.NORMAL)
+        self.pexels_key.config(state=tk.NORMAL)
+        
+        # Enable relevant inputs based on source
         if self.wallpaper_source == "local":
             self.folder_button.config(state=tk.NORMAL)
-            self.url_entry.config(state=tk.DISABLED)
-        else:
-            self.folder_button.config(state=tk.DISABLED)
+        elif self.wallpaper_source == "online":
             self.url_entry.config(state=tk.NORMAL)
+        elif self.wallpaper_source == "unsplash":
+            if not self.source_manager.config["unsplash_api_key"]:
+                messagebox.showwarning("API Key Required", "Please enter your Unsplash API key in the configuration section.")
+        elif self.wallpaper_source == "pexels":
+            if not self.source_manager.config["pexels_api_key"]:
+                messagebox.showwarning("API Key Required", "Please enter your Pexels API key in the configuration section.")
 
     def select_folder(self):
         self.wallpaper_folder = filedialog.askdirectory()
@@ -115,15 +156,40 @@ class WallpaperChangerApp:
         self.stop_button.config(state=tk.DISABLED)
         self.status_label.config(text="Status: Stopped", fg="red")
 
+    def save_api_keys(self):
+        """Save API keys to config"""
+        unsplash_key = self.unsplash_key.get().strip()
+        pexels_key = self.pexels_key.get().strip()
+        
+        if unsplash_key:
+            self.source_manager.update_api_key("unsplash", unsplash_key)
+        if pexels_key:
+            self.source_manager.update_api_key("pexels", pexels_key)
+            
+        messagebox.showinfo("Success", "API keys saved successfully!")
+
     def change_wallpaper_loop(self):
         if self.running:
-            if self.wallpaper_source == "local":
-                change_wallpaper(self.wallpaper_folder)
-            else:
-                url = self.url_entry.get()
-                save_path = os.path.join(os.getcwd(), "downloaded_wallpaper.jpg")
-                download_wallpaper(url, save_path)
-                change_wallpaper_from_file(save_path)
+            try:
+                if self.wallpaper_source == "local":
+                    change_wallpaper(self.wallpaper_folder)
+                elif self.wallpaper_source == "online":
+                    url = self.url_entry.get()
+                    save_path = os.path.join(os.getcwd(), "downloaded_wallpaper.jpg")
+                    download_wallpaper(url, save_path)
+                    change_wallpaper_from_file(save_path)
+                elif self.wallpaper_source == "unsplash":
+                    wallpaper_path = self.source_manager.get_random_unsplash_image()
+                    if wallpaper_path:
+                        change_wallpaper_from_file(wallpaper_path)
+                    else:
+                        self.status_label.config(text="Status: Failed to fetch Unsplash image", fg="red")
+                elif self.wallpaper_source == "pexels":
+                    wallpaper_path = self.source_manager.get_random_pexels_image()
+                    if wallpaper_path:
+                        change_wallpaper_from_file(wallpaper_path)
+                    else:
+                        self.status_label.config(text="Status: Failed to fetch Pexels image", fg="red")
 
             self.progress["value"] = 0
             self.root.after(self.interval * 1000, self.change_wallpaper_loop)
