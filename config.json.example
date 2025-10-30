@@ -1,0 +1,13 @@
+{
+    "unsplash_api_key": "",
+    "pexels_api_key": "",
+    "default_source": "local",
+    "interval": 10,
+    "save_directory": "downloaded_wallpapers",
+    "schedule_mode": "interval",
+    "schedule_interval_type": "minutes",
+    "schedule_interval_value": 30,
+    "schedule_times": ["09:00", "12:00", "17:00"],
+    "run_on_startup": false,
+    "use_windows_scheduler": false
+}
